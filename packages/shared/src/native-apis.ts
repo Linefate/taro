@@ -37,6 +37,7 @@ export interface IApiDiff {
   }
 }
 
+// 需要 Promise 化的 API 列表
 const needPromiseApis = new Set<string>([
   'addPhoneContact',
   'authorize',
@@ -224,9 +225,22 @@ function getNormalRequest (global) {
   }
 }
 
-function processApis (taro, global, config: IProcessApisIOptions = {}) {
+/**
+ * 处理 API
+ * @param taro Taro 对象
+ * @param global 小程序全局对象，如微信的 wx，支付宝的 my | tt 字节 | swan（京东）
+ * @param config 配置对象
+ * @param config.needPromiseApis 需要 Promise 化的 API 列表
+ * @param config.handleSyncApis 处理同步 API
+ * @param config.transformMeta 转换 API 参数
+ * @param config.modifyApis 修改 API 列表
+ */
+function processApis(taro, global, config: IProcessApisIOptions = {}) {
+  // 需要 Promise 化的 API 列表
   const patchNeedPromiseApis = config.needPromiseApis || []
+  // 需要 Promise 化的 API 列表
   const _needPromiseApis = new Set<string>([...patchNeedPromiseApis, ...needPromiseApis])
+  // 需要保留的 API 列表
   const preserved = [
     'getEnv',
     'interceptors',
@@ -240,17 +254,25 @@ function processApis (taro, global, config: IProcessApisIOptions = {}) {
     'webpackJsonp'
   ]
 
+  /**
+   * 收集 API 列表：
+   * Object.keys(global).filter((api) => preserved.indexOf(api) === -1)
+   * 1. 如果 config.isOnlyPromisify 为 true，则只收集需要 Promise 化的 API 列表
+   * 2. 如果 config.isOnlyPromisify 为 false，则收集所有 API 列表，并排除需要保留的 API 列表
+   */
   const apis = new Set(
-    !config.isOnlyPromisify
-      ? Object.keys(global).filter(api => preserved.indexOf(api) === -1)
-      : patchNeedPromiseApis
+    !config.isOnlyPromisify ? Object.keys(global).filter((api) => preserved.indexOf(api) === -1) : patchNeedPromiseApis
   )
 
+  // 修改 API 列表
   if (config.modifyApis) {
     config.modifyApis(apis)
   }
 
-  apis.forEach(key => {
+  apis.forEach((key) => {
+    /**
+     * * 1.如果 API 在需要 Promise 化的 API 列表中，则需要 Promise 化
+     */
     if (_needPromiseApis.has(key)) {
       const originKey = key
       taro[originKey] = (options: Record<string, any> | string = {}, ...args) => {
@@ -281,9 +303,9 @@ function processApis (taro, global, config: IProcessApisIOptions = {}) {
         // 为页面跳转相关的 API 设置一个随机数作为路由参数。为了给 runtime 区分页面。
         setUniqueKeyToRoute(key, options)
 
-        // Promise 化
+        // * Promise 化
         const p: any = new Promise((resolve, reject) => {
-          obj.success = res => {
+          obj.success = (res) => {
             config.modifyAsyncResult?.(key, res)
             options.success?.(res)
             if (key === 'connectSocket') {
@@ -324,6 +346,9 @@ function processApis (taro, global, config: IProcessApisIOptions = {}) {
         return p
       }
     } else {
+      /**
+       * * 2.同步 API 或普通函数 → 直接挂载
+       */
       let platformKey = key
 
       // 改变 key 或 option 字段，如需要把支付宝标准的字段对齐微信标准的字段
@@ -336,6 +361,7 @@ function processApis (taro, global, config: IProcessApisIOptions = {}) {
         taro[key] = nonsupport(key)
         return
       }
+      // 如果 API 是函数，则需要处理同步 API
       if (isFunction(global[key])) {
         taro[key] = (...args) => {
           if (config.handleSyncApis) {
@@ -345,20 +371,27 @@ function processApis (taro, global, config: IProcessApisIOptions = {}) {
           }
         }
       } else {
+        // 如果 API 不是函数，则直接赋值
         taro[key] = global[platformKey]
       }
     }
   })
-
+  // 加上 Taro 自己的通用 API
   !config.isOnlyPromisify && equipCommonApis(taro, global, config)
 }
 
 /**
- * 挂载常用 API
+ * 挂载常用 API(taro通用能力)
  * @param taro Taro 对象
  * @param global 小程序全局对象，如微信的 wx，支付宝的 my
+ * ✔ canIUseWebp — 判断是否支持 webp
+ * ✔ request / interceptors
+ * ✔ getCurrentPages / getApp
+ * ✔ requirePlugin
+ * ✔ createSelectorQuery 的 nextTick 延迟执行
+ * ✔ taro.getAppInfo
  */
-function equipCommonApis (taro, global, apis: Record<string, any> = {}) {
+function equipCommonApis(taro, global, apis: Record<string, any> = {}) {
   taro.canIUseWebp = getCanIUseWebp(taro)
   taro.getCurrentPages = getCurrentPages || nonsupport('getCurrentPages')
   taro.getApp = getApp || nonsupport('getApp')
