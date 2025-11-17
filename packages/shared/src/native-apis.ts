@@ -403,15 +403,19 @@ function equipCommonApis(taro, global, apis: Record<string, any> = {}) {
     taro.requirePlugin = nonsupport('requirePlugin')
   }
 
-  // request & interceptors
+  // --start----request & interceptor--start----
+  // request & interceptor
+  // 获取 对应环境的request方法
   const request = apis.request || getNormalRequest(global)
   function taroInterceptor (chain) {
     return request(chain.requestParams)
   }
+  // 使用 Link 来request的实现拦截器
   const link = new taro.Link(taroInterceptor)
   taro.request = link.request.bind(link)
   taro.addInterceptor = link.addInterceptor.bind(link)
   taro.cleanInterceptors = link.cleanInterceptors.bind(link)
+  // --end----request & interceptor--end----
   taro.miniGlobal = taro.options.miniGlobal = global
   taro.getAppInfo = function () {
     return {
