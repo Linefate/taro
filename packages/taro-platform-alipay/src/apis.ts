@@ -5,7 +5,14 @@ import { needPromiseApis } from './apis-list'
 import type { IApiDiff } from '@tarojs/shared'
 
 declare const my: any
-
+/**
+ * 抹平API参数的差异
+ * key 为 wx 小程序中的 API 名称
+ * alias 为 alipay 小程序中的 API 名称
+ * options 为 API 参数的差异
+ * set 为 API 参数的值修改
+ * change 为 API 参数的键名修改
+ */
 const apiDiff: IApiDiff = {
   login: {
     alias: 'getAuthCode',
