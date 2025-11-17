@@ -2,7 +2,7 @@ import Chain from './chain'
 
 import type { IRequestParams, TInterceptor } from './chain'
 
-// 管理拦截器列表冰并触发Chain.proceed
+// 管理拦截器列表并触发 chain.proceed()
 // ✔ 管理拦截器数组（Chain 的 interceptors）
 // ✔ 保证最后一个拦截器是核心实现（避免被覆盖）
 // ✔ 对外提供 request() 方法来触发 chain.proceed()
