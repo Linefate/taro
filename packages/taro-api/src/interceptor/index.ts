@@ -16,7 +16,7 @@ export default class Link {
     this.taroInterceptor = interceptor
     this.chain = new Chain()
   }
-  
+
   request (requestParams: IRequestParams) {
     const chain = this.chain
     // 保存一个核心拦截器
