@@ -4,7 +4,7 @@ import type { IRequestParams, TInterceptor } from './chain'
 
 // 管理拦截器列表并触发 chain.proceed()
 // ✔ 管理拦截器数组（Chain 的 interceptors）
-// ✔ 保证最后一个拦截器是核心实现（避免被覆盖）
+// ✔ 保证new Link时传入的是洋葱模型的最核心实现
 // ✔ 对外提供 request() 方法来触发 chain.proceed()
 // ✅ 一个“洋葱工厂”：接收一堆拦截器 → 加入核心拦截器 → 生成洋葱 → 执行它
 // ✔ 允许额外添加拦截器（中间件）
@@ -40,6 +40,12 @@ export default class Link {
   }
 }
 
+/**
+ * https://docs.taro.zone/docs/apis/taro.extend/interceptorify
+ * 包裹 promiseify api 的洋葱圈模型
+ * @param promiseifyApi
+ * @returns
+ */
 export function interceptorify (promiseifyApi) {
   return new Link(function (chain) {
     return promiseifyApi(chain.requestParams)
