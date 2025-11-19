@@ -59,6 +59,7 @@ export const initInterceptorNode = () => {
 
 ### chain
 
+> packages/taro-api/src/interceptor/chain.ts
 "promise 的链式结构形成洋葱模型"。 1.每个拦截器都写成 async 函数 2.每个拦截器都执行到 await chain.proceed() 就暂停
 3.proceed() 会进入下一层拦截器 4.最内层结束后，Promise resolve 5.外层的 async 函数继续执行“after 部分” 6.形成一层一层往外返回
 
@@ -165,7 +166,7 @@ export default class Chain {
 ```
 
 ### Link
-
+> packages/taro-api/src/interceptor/index.ts
 link 是拦截器的管理器，负责管理拦截器数组，并触发 chain.proceed()
 1.new Link 时传入的是洋葱模型的最核心实现
 2.addInterceptor 添加拦截器
@@ -191,6 +192,7 @@ taro.cleanInterceptors = link.cleanInterceptors.bind(link)
 
 ### interceptorify
 
+> packages/taro-api/src/interceptor/index.ts
 > 包裹 promiseify api 的洋葱圈模型
 
 > 它把一个普通的 API（taro.showModal），升级成了一个可插拔、可扩展、可复用、可多层拦截的“洋葱模型 API”
